@@ -2,6 +2,8 @@
 
 Welcome to **C-RAG**! This project implements a **Corrective Retrieval-Augmented Generation** system to deliver accurate and relevant answers to your questions by combining document retrieval, relevance grading, query transformation, and web search. Built with Python and modern AI tools, it’s designed to be robust and extensible. Let’s dive in! 🌟
 
+Read the research paper: arXiv:2401.15884
+
 ## 📖 Overview
 
 C-RAG enhances the traditional Retrieval-Augmented Generation (RAG) framework by:
