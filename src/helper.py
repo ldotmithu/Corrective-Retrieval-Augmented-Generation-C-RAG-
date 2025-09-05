@@ -23,8 +23,7 @@ from prompts.Agent_Prompt import GRADE_DOCUMENTS_PROMPT, QUESTION_REWRITER_PROMP
 PERSIST_DIR = "CHROMA-INDEX"
 
 KNOWLEDGE_BASE_URLS = [
-    "https://lilianweng.github.io/posts/2023-06-23-agent/",
-    "https://lilianweng.github.io/posts/2023-10-25-adv-attack-llm/",
+    "https://www.anthropic.com/engineering/building-effective-agents",
 ]
 
 
@@ -40,57 +39,42 @@ def get_model(shared_state:AgentState):
 
 console = Console()
 
-def build_vector_store(shared_state: "AgentState"):
+def build_vector_store(shared_state: dict, urls: list) -> dict:
     """
-    Build or load a persistent vector store (ChromaDB) from knowledge base URLs.
+    Build a Chroma vector store from a list of knowledge base URLs.
+
+    Args:
+        shared_state (dict): Dictionary to store shared objects like the vector store.
+        urls (list): List of URLs to load documents from.
+
+    Returns:
+        dict: Updated shared_state with 'vector_store' retriever.
     """
-    try:
-        if not os.path.exists(PERSIST_DIR):
-            console.print("[yellow]⚡ Building new Chroma vector store...[/yellow]")
+    console.print("[yellow]⚡ Building Chroma vector store...[/yellow]")
 
-            # Load documents
-            docs = []
-            for url in KNOWLEDGE_BASE_URLS:
-                try:
-                    docs.extend(WebBaseLoader(url).load())
-                except Exception as e:
-                    console.print(f"[red]❌ Failed to load {url}:[/red] {e}")
+    # Load documents from all URLs
+    loaded_docs = [WebBaseLoader(url).load() for url in urls]
+    all_docs = [doc for sublist in loaded_docs for doc in sublist]
 
-            if not docs:
-                console.print("[red]No documents loaded![/red]")
-                return shared_state
+    # Split documents into smaller chunks for embeddings
+    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=250,
+        chunk_overlap=0
+    )
+    doc_chunks = text_splitter.split_documents(all_docs)
 
-            # Split into chunks
-            text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-                chunk_size=250,
-                chunk_overlap=0,
-            )
-            doc_splits = text_splitter.split_documents(docs)
+    # Create Chroma vector store
+    vector_store = Chroma.from_documents(
+        documents=doc_chunks,
+        collection_name="rag-chroma",
+        embedding=HuggingFaceEmbeddings()
+    )
 
-            # Build vector store
-            vector_store = Chroma.from_documents(
-                documents=doc_splits,
-                collection_name="rag-chroma",
-                embedding=HuggingFaceEmbeddings(),
-                persist_directory=PERSIST_DIR,
-            )
-            console.print("[green]✅ Vector store built and persisted.[/green]")
+    # Store the retriever in shared_state
+    shared_state['vector_store'] = vector_store.as_retriever()
 
-        else:
-            console.print("[cyan]📦 Loading existing Chroma vector store...[/cyan]")
-            vector_store = Chroma(
-                persist_directory=PERSIST_DIR,
-                embedding_function=HuggingFaceEmbeddings(),
-            )
-            console.print("[green]✅ Vector store loaded from disk.[/green]")
-
-        # Always attach retriever to shared state
-        shared_state["vector_store"] = vector_store.as_retriever()
-
-    except Exception as e:
-        console.print(f"[red]❌ Error while building/loading vector store:[/red] {e}")
-
-    return shared_state  # ✅ Always return
+    console.print("[green]✅ Vector store built successfully![/green]")
+    return shared_state
 
        
 
