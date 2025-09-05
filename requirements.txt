@@ -1,0 +1,15 @@
+langchain
+langchain-community 
+langgraph 
+faiss-cpu
+python-dotenv
+langchain-groq
+pydantic
+streamlit 
+pandas
+numpy
+uvicorn
+langsmith
+
+
+-e .
