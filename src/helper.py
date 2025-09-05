@@ -39,7 +39,7 @@ def get_model(shared_state:AgentState):
 
 console = Console()
 
-def build_vector_store(shared_state: dict, urls: list) -> dict:
+def build_vector_store(shared_state: AgentState, urls=KNOWLEDGE_BASE_URLS) -> dict:
     """
     Build a Chroma vector store from a list of knowledge base URLs.
 
@@ -50,7 +50,7 @@ def build_vector_store(shared_state: dict, urls: list) -> dict:
     Returns:
         dict: Updated shared_state with 'vector_store' retriever.
     """
-    console.print("[yellow]⚡ Building Chroma vector store...[/yellow]")
+    console.print("[yellow]⚡Chroma vector store...[/yellow]")
 
     # Load documents from all URLs
     loaded_docs = [WebBaseLoader(url).load() for url in urls]
@@ -73,7 +73,7 @@ def build_vector_store(shared_state: dict, urls: list) -> dict:
     # Store the retriever in shared_state
     shared_state['vector_store'] = vector_store.as_retriever()
 
-    console.print("[green]✅ Vector store built successfully![/green]")
+    #console.print("[green]✅ Vector store built successfully![/green]")
     return shared_state
 
        
